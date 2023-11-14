@@ -22,10 +22,22 @@ RUN echo 'UsePAM no' >> /etc/ssh/sshd_config
 
 The OpenBSD image is basically:
 ```
-INSTALL_FROM https://cdn.openbsd.org/pub/OpenBSD/7.0/amd64/install70.iso
-RUN echo "PermitEmptyPasswords yes" >> /etc/ssh/sshd_config
-RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
-RUN echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
-RUN sed -i '' -e "s/root:.*:/root::/" /etc/master.passwd
+RUN qemu-img create -f qcow2 OpenBSD-7.4-amd64.qcow2.qcow2 4G
+RUN curl -LO https://cdn.openbsd.org/pub/OpenBSD/7.4/amd64/install74.iso
+RUN qemu-system-x86_64 -cdrom install74.iso -drive file=OpenBSD-7.4-amd64.qcow2
+INSTALL default
+EXCEPT hostname=openbsd
+EXCEPT password=password
+EXCEPT x-window-system=no
+EXCEPT allow-root-ssh-login=yes
+EXCEPT timezone=UTC
+EXCEPT distribution=-game74.tgz -xbase74.tgz -xshare74.tgz -xfont74.tgz -xserv74.tgz
+EXCEPT no-sha256-verif=yes
+RUN sed -E -i.bak -e "s/^root:[^:]*:/root::/" /etc/master.passwd
 RUN pwd_mkdb /etc/master.passwd
+RUN rm /etc/master.passwd.bak
+RUN echo 'PermitEmptyPasswords yes' >> /etc/ssh/sshd_config
+RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+RUN echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config
+RUN echo 'https://ftp.openbsd.org/pub/OpenBSD' > /etc/installurl
 ```
