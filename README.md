@@ -42,3 +42,26 @@ RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
 RUN echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config
 RUN echo 'https://ftp.openbsd.org/pub/OpenBSD' > /etc/installurl
 ```
+
+The NetBSD image is basically:
+```
+RUN qemu-img create -f qcow2 NetBSD-10.0-amd64.qcow2 4G
+RUN curl -LO https://cdn.netbsd.org/pub/NetBSD/NetBSD-10.0/images/NetBSD-10.0-amd64.iso
+RUN qemu-system-x86_64 -cdrom NetBSD-10.0-amd64.iso -drive file=NetBSD-10.0-amd64.qcow2 -smp 2 -m 2G -machine q35
+INSTALL default
+EXCEPT shall-we-continue=yes
+EXCEPT partitioning=use-default-partition-sizes
+EXCEPT partition=[delete swap, set size of / to -1 (max)]
+EXCEPT shall-we-continue=yes
+EXCEPT distribution=custom-installation
+EXCEPT distribution-set=[a c d e f i]
+EXCEPT password=password
+EXCEPT entropy-generation=<random characters>
+EXCEPT configure-network=[hostname: netbsd, dns: <empty>]
+EXCEPT enable-installation-binary-packages=install
+EXCEPT enable-sshd=YES
+EXCEPT enable-raidframe=NO
+POWEROFF
+RUN qemu-system-x86_64 -drive file=NetBSD-10.0-amd64.qcow2 -smp 2 -m 2G -machine q35
+RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+```
